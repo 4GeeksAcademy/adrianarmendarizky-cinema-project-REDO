@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cinema Seat Reservation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="min-h-screen bg-slate-100 text-slate-900">
+    <main class="mx-auto flex min-h-screen w-full max-w-5xl flex-col items-center px-4 py-8">
+      <h1 class="mb-2 text-3xl font-bold tracking-tight">Cinema Seat Reservation</h1>
+      <p class="mb-8 text-sm text-slate-600">Click an available seat to reserve it.</p>
+
+      <section class="w-full max-w-3xl rounded-2xl bg-white p-6 shadow-xl ring-1 ring-slate-200">
+        <div class="mx-auto mb-8 w-full max-w-2xl">
+          <div class="rounded-t-3xl bg-slate-800 py-3 text-center text-xs font-semibold uppercase tracking-[0.3em] text-slate-100 shadow-lg">
+            Screen
+          </div>
+          <div class="h-2 rounded-b-3xl bg-slate-300"></div>
+        </div>
+
+        <div id="seat-grid" class="mx-auto grid w-full max-w-2xl grid-cols-10 gap-2 sm:gap-3" aria-label="Cinema seat map"></div>
+
+        <div class="mt-8 grid grid-cols-1 gap-4 rounded-xl bg-slate-50 p-4 text-sm sm:grid-cols-3">
+          <div class="flex items-center gap-2">
+            <span class="inline-block h-4 w-4 rounded bg-green-500"></span>
+            <span>Available (L)</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="inline-block h-4 w-4 rounded bg-red-500"></span>
+            <span>Occupied (X)</span>
+          </div>
+          <div class="sm:text-right">
+            <p id="counts" class="font-semibold text-slate-700"></p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      // Compiled from TypeScript logic layer.
+      const TOTAL_ROWS = 8;
+      const TOTAL_COLS = 10;
+
+      function initializeSeating() {
+        return Array.from({ length: TOTAL_ROWS }, () => Array(TOTAL_COLS).fill(0));
+      }
+
+      function reserveSeat(seating, row, col) {
+        if (row < 1 || row > TOTAL_ROWS || col < 1 || col > TOTAL_COLS) {
+          return {
+            ok: false,
+            message: `Error: seat (${row}, ${col}) is out of bounds.`,
+          };
+        }
+
+        const rowIndex = row - 1;
+        const colIndex = col - 1;
+
+        if (seating[rowIndex][colIndex] === 1) {
+          return {
+            ok: false,
+            message: `Error: seat (${row}, ${col}) is already occupied.`,
+          };
+        }
+
+        seating[rowIndex][colIndex] = 1;
+        return {
+          ok: true,
+          message: `Success: seat (${row}, ${col}) reserved.`,
+        };
+      }
+
+      function countSeats(seating) {
+        let occupied = 0;
+
+        for (let row = 0; row < TOTAL_ROWS; row += 1) {
+          for (let col = 0; col < TOTAL_COLS; col += 1) {
+            if (seating[row][col] === 1) {
+              occupied += 1;
+            }
+          }
+        }
+
+        const totalSeats = TOTAL_ROWS * TOTAL_COLS;
+        return { occupied, available: totalSeats - occupied };
+      }
+
+      const seating = initializeSeating();
+      const seatGrid = document.getElementById("seat-grid");
+      const countsElement = document.getElementById("counts");
+
+      function updateCounts() {
+        const { occupied, available } = countSeats(seating);
+        countsElement.textContent = `Occupied: ${occupied} | Available: ${available}`;
+      }
+
+      function renderGrid() {
+        seatGrid.innerHTML = "";
+
+        for (let row = 1; row <= TOTAL_ROWS; row += 1) {
+          for (let col = 1; col <= TOTAL_COLS; col += 1) {
+            const occupied = seating[row - 1][col - 1] === 1;
+
+            const button = document.createElement("button");
+            button.type = "button";
+            button.textContent = occupied ? "X" : "L";
+            button.className = [
+              "aspect-square w-full rounded-md text-sm font-bold shadow-sm transition",
+              occupied
+                ? "cursor-not-allowed bg-red-500 text-white"
+                : "cursor-pointer bg-green-500 text-white hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2",
+            ].join(" ");
+
+            button.setAttribute("aria-label", `Row ${row} Seat ${col} ${occupied ? "occupied" : "available"}`);
+            button.disabled = occupied;
+
+            button.addEventListener("click", () => {
+              const result = reserveSeat(seating, row, col);
+              if (result.ok) {
+                renderGrid();
+                updateCounts();
+              }
+            });
+
+            seatGrid.appendChild(button);
+          }
+        }
+      }
+
+      renderGrid();
+      updateCounts();
+    </script>
+  </body>
+</html>
