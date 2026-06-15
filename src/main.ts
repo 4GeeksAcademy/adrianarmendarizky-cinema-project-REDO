@@ -5,8 +5,9 @@ if (typeof document !== "undefined") {
       app.textContent = "If you can see this, Tailwind is working.";
     }
   });
+} else {
+  // Run the cinema CLI scenarios when executed from the terminal.
+  void import("./cinema-cli");
 }
-
-console.log("Hello from src/main.ts");
 
 export {};
